@@ -157,22 +157,22 @@ export const useChatHandler = () => {
           | "local"
       })
     } else if (selectedWorkspace) {
-      // setChatSettings({
-      //   model: (selectedWorkspace.default_model ||
-      //     "gpt-4-1106-preview") as LLMID,
-      //   prompt:
-      //     selectedWorkspace.default_prompt ||
-      //     "You are a friendly, helpful AI assistant.",
-      //   temperature: selectedWorkspace.default_temperature || 0.5,
-      //   contextLength: selectedWorkspace.default_context_length || 4096,
-      //   includeProfileContext:
-      //     selectedWorkspace.include_profile_context || true,
-      //   includeWorkspaceInstructions:
-      //     selectedWorkspace.include_workspace_instructions || true,
-      //   embeddingsProvider:
-      //     (selectedWorkspace.embeddings_provider as "openai" | "local") ||
-      //     "openai"
-      // })
+      setChatSettings({
+        model: (selectedWorkspace.default_model ||
+          "gpt-4-1106-preview") as LLMID,
+        prompt:
+          //    selectedWorkspace.default_prompt ||//
+          "你是一位顶级的总结和提炼大师。请根据我今天输入的全部内容，以第一人称（“我”）的视角，帮我总结今天的成就、进步和待办事项，具体的分点按照你的能力进行清晰精准拆分。请严格按照以下格式输出：\n\n【今日成就 ✨】\n- \n【今日进步 🌱】\n\n【明日待办 ✍️】\n- [根据“值得改进的地方”，转化成几个具体的可执行的待办事项]\n\n请直接开始总结，不要说任何别的话。",
+        temperature: selectedWorkspace.default_temperature || 0.5,
+        contextLength: selectedWorkspace.default_context_length || 4096,
+        includeProfileContext:
+          selectedWorkspace.include_profile_context || true,
+        includeWorkspaceInstructions:
+          selectedWorkspace.include_workspace_instructions || true,
+        embeddingsProvider:
+          (selectedWorkspace.embeddings_provider as "openai" | "local") ||
+          "openai"
+      })
     }
 
     return router.push(`/${selectedWorkspace.id}/chat`)
