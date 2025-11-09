@@ -25,12 +25,11 @@ export type GoogleLLMID =
 
 // Anthropic Models
 export type AnthropicLLMID =
-  | "claude-2.1" // Claude 2
-  | "claude-instant-1.2" // Claude Instant
-  | "claude-3-haiku-20240307" // Claude 3 Haiku
-  | "claude-3-sonnet-20240229" // Claude 3 Sonnet
-  | "claude-3-opus-20240229" // Claude 3 Opus
-  | "claude-3-5-sonnet-20240620" // Claude 3.5 Sonnet
+  | "claude-haiku-4-5-20251001" // Claude Haiku 4.5
+  | "claude-sonnet-4-5-20250929" // Claude Sonnet 4.5
+  | "claude-opus-4-1-20250805" // Claude Opus 4.1
+  | "claude-3-haiku-20240307" // Claude 3 Haiku (Legacy)
+  | "claude-3-opus-20240229" // Claude 3 Opus (Legacy)
 
 // Mistral Models
 export type MistralLLMID =

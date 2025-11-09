@@ -3,44 +3,60 @@ import { LLM } from "@/types"
 const ANTHROPIC_PLATFORM_LINK =
   "https://docs.anthropic.com/claude/reference/getting-started-with-the-api"
 
-// Anthropic Models (UPDATED 06/20/24) -----------------------------
+// Anthropic Models (UPDATED 01/09/25) -----------------------------
 
-// Claude 2 (UPDATED 12/21/23)
-const CLAUDE_2: LLM = {
-  modelId: "claude-2.1",
-  modelName: "Claude 2",
+// Claude Haiku 4.5 (UPDATED 10/01/24)
+const CLAUDE_HAIKU_4_5: LLM = {
+  modelId: "claude-haiku-4-5-20251001",
+  modelName: "Claude Haiku 4.5",
   provider: "anthropic",
-  hostedId: "claude-2.1",
+  hostedId: "claude-haiku-4-5-20251001",
   platformLink: ANTHROPIC_PLATFORM_LINK,
-  imageInput: false,
+  imageInput: true,
   pricing: {
     currency: "USD",
     unit: "1M tokens",
-    inputCost: 8,
-    outputCost: 24
+    inputCost: 1,
+    outputCost: 5
   }
 }
 
-// Claude Instant (UPDATED 12/21/23)
-const CLAUDE_INSTANT: LLM = {
-  modelId: "claude-instant-1.2",
-  modelName: "Claude Instant",
+// Claude Sonnet 4.5 (UPDATED 09/29/24)
+const CLAUDE_SONNET_4_5: LLM = {
+  modelId: "claude-sonnet-4-5-20250929",
+  modelName: "Claude Sonnet 4.5",
   provider: "anthropic",
-  hostedId: "claude-instant-1.2",
+  hostedId: "claude-sonnet-4-5-20250929",
   platformLink: ANTHROPIC_PLATFORM_LINK,
-  imageInput: false,
+  imageInput: true,
   pricing: {
     currency: "USD",
     unit: "1M tokens",
-    inputCost: 0.8,
-    outputCost: 2.4
+    inputCost: 3,
+    outputCost: 15
   }
 }
 
-// Claude 3 Haiku (UPDATED 03/13/24)
+// Claude Opus 4.1 (UPDATED 08/05/24)
+const CLAUDE_OPUS_4_1: LLM = {
+  modelId: "claude-opus-4-1-20250805",
+  modelName: "Claude Opus 4.1",
+  provider: "anthropic",
+  hostedId: "claude-opus-4-1-20250805",
+  platformLink: ANTHROPIC_PLATFORM_LINK,
+  imageInput: true,
+  pricing: {
+    currency: "USD",
+    unit: "1M tokens",
+    inputCost: 15,
+    outputCost: 75
+  }
+}
+
+// Legacy: Claude 3 Haiku (UPDATED 03/13/24)
 const CLAUDE_3_HAIKU: LLM = {
   modelId: "claude-3-haiku-20240307",
-  modelName: "Claude 3 Haiku",
+  modelName: "Claude 3 Haiku (Legacy)",
   provider: "anthropic",
   hostedId: "claude-3-haiku-20240307",
   platformLink: ANTHROPIC_PLATFORM_LINK,
@@ -53,26 +69,10 @@ const CLAUDE_3_HAIKU: LLM = {
   }
 }
 
-// Claude 3 Sonnet (UPDATED 03/04/24)
-const CLAUDE_3_SONNET: LLM = {
-  modelId: "claude-3-sonnet-20240229",
-  modelName: "Claude 3 Sonnet",
-  provider: "anthropic",
-  hostedId: "claude-3-sonnet-20240229",
-  platformLink: ANTHROPIC_PLATFORM_LINK,
-  imageInput: true,
-  pricing: {
-    currency: "USD",
-    unit: "1M tokens",
-    inputCost: 3,
-    outputCost: 15
-  }
-}
-
-// Claude 3 Opus (UPDATED 03/04/24)
+// Legacy: Claude 3 Opus (UPDATED 03/04/24)
 const CLAUDE_3_OPUS: LLM = {
   modelId: "claude-3-opus-20240229",
-  modelName: "Claude 3 Opus",
+  modelName: "Claude 3 Opus (Legacy)",
   provider: "anthropic",
   hostedId: "claude-3-opus-20240229",
   platformLink: ANTHROPIC_PLATFORM_LINK,
@@ -85,27 +85,10 @@ const CLAUDE_3_OPUS: LLM = {
   }
 }
 
-// Claude 3.5 Sonnet (UPDATED 06/20/24)
-const CLAUDE_3_5_SONNET: LLM = {
-  modelId: "claude-3-5-sonnet-20240620",
-  modelName: "Claude 3.5 Sonnet",
-  provider: "anthropic",
-  hostedId: "claude-3-5-sonnet-20240620",
-  platformLink: ANTHROPIC_PLATFORM_LINK,
-  imageInput: true,
-  pricing: {
-    currency: "USD",
-    unit: "1M tokens",
-    inputCost: 3,
-    outputCost: 15
-  }
-}
-
 export const ANTHROPIC_LLM_LIST: LLM[] = [
-  CLAUDE_2,
-  CLAUDE_INSTANT,
+  CLAUDE_HAIKU_4_5,
+  CLAUDE_SONNET_4_5,
+  CLAUDE_OPUS_4_1,
   CLAUDE_3_HAIKU,
-  CLAUDE_3_SONNET,
-  CLAUDE_3_OPUS,
-  CLAUDE_3_5_SONNET
+  CLAUDE_3_OPUS
 ]
