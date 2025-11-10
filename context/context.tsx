@@ -78,6 +78,8 @@ interface ChatbotUIContext {
   setSelectedChat: Dispatch<SetStateAction<Tables<"chats"> | null>>
   chatFileItems: Tables<"file_items">[]
   setChatFileItems: Dispatch<SetStateAction<Tables<"file_items">[]>>
+  contextMessages: ChatMessage[]
+  setContextMessages: Dispatch<SetStateAction<ChatMessage[]>>
 
   // ACTIVE CHAT STORE
   abortController: AbortController | null
@@ -204,6 +206,8 @@ export const ChatbotUIContext = createContext<ChatbotUIContext>({
   setChatSettings: () => {},
   chatFileItems: [],
   setChatFileItems: () => {},
+  contextMessages: [],
+  setContextMessages: () => {},
 
   // ACTIVE CHAT STORE
   isGenerating: false,

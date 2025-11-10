@@ -79,3 +79,54 @@ export const deleteChat = async (chatId: string) => {
 
   return true
 }
+
+export const historyBetween = async (
+  userId: string,
+  startDate?: Date,
+  endDate?: Date
+) => {
+  let start = startDate
+  let end = endDate
+
+  if (!start) {
+    start = new Date()
+    start.setDate(start.getDate() - 1)
+  }
+
+  if (!end) {
+    end = new Date()
+  }
+
+  const startOfDay = new Date(start.setHours(0, 0, 0, 0)).toISOString()
+  const endOfDay = new Date(end.setHours(23, 59, 59, 999)).toISOString()
+
+  const { data: chats, error } = await supabase
+    .from("chats")
+    .select("*")
+    .eq("user_id", userId)
+    .gte("created_at", startOfDay)
+    .lte("created_at", endOfDay)
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return chats
+}
+
+export const historyYesterday = async (userId: string) => {
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const today = new Date()
+
+  return historyBetween(userId, yesterday, today)
+}
+
+export const historyLastWeek = async (userId: string) => {
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const today = new Date()
+
+  return historyBetween(userId, sevenDaysAgo, today)
+}

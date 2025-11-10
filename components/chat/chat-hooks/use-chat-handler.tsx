@@ -2,9 +2,12 @@ import { ChatbotUIContext } from "@/context/context"
 import { getAssistantCollectionsByAssistantId } from "@/db/assistant-collections"
 import { getAssistantFilesByAssistantId } from "@/db/assistant-files"
 import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
-import { updateChat } from "@/db/chats"
+import { updateChat, historyYesterday, historyLastWeek } from "@/db/chats"
 import { getCollectionFilesByCollectionId } from "@/db/collection-files"
-import { deleteMessagesIncludingAndAfter } from "@/db/messages"
+import {
+  deleteMessagesIncludingAndAfter,
+  getMessagesByChatId
+} from "@/db/messages"
 import { buildFinalMessages } from "@/lib/build-prompt"
 import { Tables } from "@/supabase/types"
 import { ChatMessage, ChatPayload, LLMID, ModelProvider } from "@/types"
@@ -66,7 +69,9 @@ export const useChatHandler = () => {
     models,
     isPromptPickerOpen,
     isFilePickerOpen,
-    isToolPickerOpen
+    isToolPickerOpen,
+    contextMessages,
+    setContextMessages
   } = useContext(ChatbotUIContext)
 
   const chatInputRef = useRef<HTMLTextAreaElement>(null)
@@ -175,7 +180,36 @@ export const useChatHandler = () => {
       })
     }
 
-    return router.push(`/${selectedWorkspace.id}/chat`)
+    setSelectedChat(newChat)
+
+    await handleSendMessage(currentChatSettings.prompt, [], false)
+
+    // Load yesterday's and today's chats into context
+    const today = new Date()
+    const dayOfWeek = today.getDay() // Sunday - 0, Monday - 1, ..., Saturday - 6
+
+    let chatsToLoad: Tables<"chats">[] = []
+
+    if (dayOfWeek === 0) {
+      // If it's Sunday, load last week's chats
+      chatsToLoad = await historyLastWeek(profile.user_id)
+    } else {
+      // Otherwise, load yesterday's and today's chats
+      chatsToLoad = await historyYesterday(profile.user_id)
+    }
+
+    let allMessages: ChatMessage[] = []
+    for (const chat of chatsToLoad) {
+      const messages = await getMessagesByChatId(chat.id)
+      const chatMessages = messages.map(message => ({
+        message: message,
+        fileItems: []
+      }))
+      allMessages = [...allMessages, ...chatMessages]
+    }
+    setContextMessages(allMessages)
+
+    return router.push(`/${selectedWorkspace.id}/chat/${newChat.id}`)
   }
 
   const handleFocusChatInput = () => {
@@ -264,10 +298,34 @@ export const useChatHandler = () => {
         workspaceInstructions: selectedWorkspace!.instructions || "",
         chatMessages: isRegeneration
           ? [...chatMessages]
-          : [...chatMessages, tempUserChatMessage],
+          : [...contextMessages, ...chatMessages, tempUserChatMessage],
         assistant: selectedChat?.assistant_id ? selectedAssistant : null,
         messageFileItems: retrievedFileItems,
         chatFileItems: chatFileItems
+      }
+
+      // Check for keyword trigger
+      const keywords = ["last week", "过去一周", "上一周"]
+      const containsKeyword = keywords.some(keyword =>
+        messageContent.includes(keyword)
+      )
+
+      if (containsKeyword) {
+        const lastWeekChats = await historyLastWeek(profile.user_id)
+        let lastWeekMessages: ChatMessage[] = []
+        for (const chat of lastWeekChats) {
+          const messages = await getMessagesByChatId(chat.id)
+          const chatMessages = messages.map(message => ({
+            message: message,
+            fileItems: []
+          }))
+          lastWeekMessages = [...lastWeekMessages, ...chatMessages]
+        }
+        payload.chatMessages = [
+          ...lastWeekMessages,
+          ...chatMessages,
+          tempUserChatMessage
+        ]
       }
 
       let generatedText = ""
