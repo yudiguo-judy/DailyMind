@@ -1,6 +1,9 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import {
+  openAIStreamToReadableStream,
+  createStreamingResponse
+} from "@/lib/stream-utils"
 import { ChatAPIPayload } from "@/types"
-import { OpenAIStream, StreamingTextResponse } from "ai"
 import OpenAI from "openai"
 import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions.mjs"
 
@@ -59,9 +62,9 @@ export async function POST(request: Request) {
       stream: true
     })
 
-    const stream = OpenAIStream(response)
+    const stream = openAIStreamToReadableStream(response)
 
-    return new StreamingTextResponse(stream)
+    return createStreamingResponse(stream)
   } catch (error: any) {
     const errorMessage = error.error?.message || "An unexpected error occurred"
     const errorCode = error.status || 500

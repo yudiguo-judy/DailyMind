@@ -1,0 +1,31 @@
+{
+  "name": "dailymind-memory-server",
+  "version": "1.0.0",
+  "description": "DailyMind Memory MCP Server - Access conversation history, summaries, and knowledge base",
+  "main": "build/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node build/index.js",
+    "inspect": "npx @anthropic-ai/mcp-inspector node build/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "memory",
+    "dailymind",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@supabase/supabase-js": "^2.47.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "dotenv": "^17.2.3",
+    "typescript": "^5.7.0"
+  }
+}

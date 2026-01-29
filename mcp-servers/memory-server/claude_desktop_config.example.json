@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "dailymind-memory": {
+      "command": "node",
+      "args": [
+        "/Users/jeffvan/Desktop/My Stuff/DayIn/Dailymind/DailyMind/mcp-servers/memory-server/build/index.js"
+      ],
+      "env": {
+        "SUPABASE_URL": "YOUR_SUPABASE_URL",
+        "SUPABASE_ANON_KEY": "YOUR_SUPABASE_ANON_KEY",
+        "USER_ID": "YOUR_USER_UUID",
+        "WORKSPACE_ID": "YOUR_WORKSPACE_UUID"
+      }
+    }
+  }
+}

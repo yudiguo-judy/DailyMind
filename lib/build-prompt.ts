@@ -2,12 +2,14 @@ import { Tables } from "@/supabase/types"
 import { ChatPayload, MessageImage } from "@/types"
 import { encode } from "gpt-tokenizer"
 import { getBase64FromDataURL, getMediaTypeFromDataURL } from "@/lib/utils"
+import { getRecentSummaries } from "@/db/daily-summaries"
 
 const buildBasePrompt = (
   prompt: string,
   profileContext: string,
   workspaceInstructions: string,
-  assistant: Tables<"assistants"> | null
+  assistant: Tables<"assistants"> | null,
+  recentSummaries?: string
 ) => {
   let fullPrompt = ""
 
@@ -16,6 +18,11 @@ const buildBasePrompt = (
   }
 
   fullPrompt += `Today is ${new Date().toLocaleDateString()}.\n\n`
+
+  // Inject recent conversation summaries for context
+  if (recentSummaries) {
+    fullPrompt += `<RECENT CONTEXT>\n${recentSummaries}\n</RECENT CONTEXT>\n\n`
+  }
 
   if (profileContext) {
     fullPrompt += `User Info:\n${profileContext}\n\n`
@@ -33,7 +40,8 @@ const buildBasePrompt = (
 export async function buildFinalMessages(
   payload: ChatPayload,
   profile: Tables<"profiles">,
-  chatImages: MessageImage[]
+  chatImages: MessageImage[],
+  workspaceId?: string
 ) {
   const {
     chatSettings,
@@ -44,11 +52,33 @@ export async function buildFinalMessages(
     chatFileItems
   } = payload
 
+  // Auto-inject recent summaries for new or early conversations
+  let recentSummariesText = ""
+  const isNewOrEarlyConversation = chatMessages.length <= 2
+
+  if (isNewOrEarlyConversation && workspaceId) {
+    try {
+      const summaries = await getRecentSummaries(
+        profile.user_id,
+        workspaceId,
+        2 // Get last 2 days
+      )
+
+      if (summaries && summaries.length > 0) {
+        recentSummariesText = formatSummariesForContext(summaries)
+      }
+    } catch (error) {
+      console.error("Failed to load recent summaries:", error)
+      // Continue without summaries if fetch fails
+    }
+  }
+
   const BUILT_PROMPT = buildBasePrompt(
     chatSettings.prompt,
     chatSettings.includeProfileContext ? profile.profile_context || "" : "",
     chatSettings.includeWorkspaceInstructions ? workspaceInstructions : "",
-    assistant
+    assistant,
+    recentSummariesText
   )
 
   const CHUNK_SIZE = chatSettings.contextLength
@@ -255,4 +285,29 @@ export async function adaptMessagesForGoogleGemini(
     geminiMessages = adaptMessagesForGeminiVision(geminiMessages)
   }
   return geminiMessages
+}
+
+/**
+ * Format recent summaries for context injection
+ */
+function formatSummariesForContext(
+  summaries: Array<{
+    date: string
+    summary: string
+    key_topics?: string[]
+  }>
+): string {
+  if (summaries.length === 0) return ""
+
+  const formatted = summaries
+    .map(s => {
+      const topics =
+        s.key_topics && s.key_topics.length > 0
+          ? ` (Topics: ${s.key_topics.join(", ")})`
+          : ""
+      return `**${s.date}**${topics}\n${s.summary}`
+    })
+    .join("\n\n---\n\n")
+
+  return `Recent conversation summaries from the past 2 days:\n\n${formatted}\n\nUse this context to better understand the user's ongoing work and maintain continuity in the conversation.`
 }
