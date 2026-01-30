@@ -200,7 +200,8 @@ export const handleHostedChat = async (
   setFirstTokenReceived: React.Dispatch<React.SetStateAction<boolean>>,
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
   setToolInUse: React.Dispatch<React.SetStateAction<string>>,
-  workspaceId?: string
+  workspaceId?: string,
+  chatId?: string
 ) => {
   const provider =
     modelData.provider === "openai" && profile.use_azure_openai
@@ -227,6 +228,7 @@ export const handleHostedChat = async (
     messages: formattedMessages,
     customModelId: provider === "custom" ? modelData.hostedId : "",
     workspaceId: workspaceId,
+    chatId: chatId,
     enableMemoryTools: provider === "anthropic" && !!workspaceId
   }
 

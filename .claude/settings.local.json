@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/guoyudi/chatbot-ui log --oneline -1 main)",
+      "Bash(git -C /Users/guoyudi/chatbot-ui log --oneline -1 HEAD)",
+      "Bash(npx tsc --noEmit --pretty)",
+      "Bash(git -C /Users/guoyudi/chatbot-ui log --oneline --all)",
+      "Bash(git -C /Users/guoyudi/chatbot-ui show:*)",
+      "Bash(npx jest:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}

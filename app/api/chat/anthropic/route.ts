@@ -6,6 +6,7 @@ import {
   isMemoryTool,
   executeMemoryTool
 } from "@/lib/memory-tools"
+import { triggerKnowledgeExtraction } from "@/lib/trigger-knowledge-extraction"
 import { ChatSettings } from "@/types"
 import { Database } from "@/supabase/types"
 import Anthropic from "@anthropic-ai/sdk"
@@ -17,9 +18,11 @@ import { cookies } from "next/headers"
  * Convert Anthropic streaming response to a ReadableStream for the browser
  */
 function anthropicStreamToReadableStream(
-  stream: AsyncIterable<Anthropic.MessageStreamEvent>
+  stream: AsyncIterable<Anthropic.MessageStreamEvent>,
+  onComplete?: (fullText: string) => void
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
+  let fullText = ""
 
   return new ReadableStream({
     async start(controller) {
@@ -28,11 +31,13 @@ function anthropicStreamToReadableStream(
           if (event.type === "content_block_delta") {
             const delta = event.delta
             if ("text" in delta) {
+              fullText += delta.text
               controller.enqueue(encoder.encode(delta.text))
             }
           }
         }
         controller.close()
+        onComplete?.(fullText)
       } catch (error) {
         controller.error(error)
       }
@@ -51,11 +56,13 @@ export async function POST(request: NextRequest) {
     chatSettings,
     messages,
     workspaceId,
+    chatId,
     enableMemoryTools = true
   } = json as {
     chatSettings: ChatSettings
     messages: any[]
     workspaceId?: string
+    chatId?: string
     enableMemoryTools?: boolean
   }
 
@@ -63,6 +70,31 @@ export async function POST(request: NextRequest) {
     const profile = await getServerProfile()
 
     checkApiKey(profile.anthropic_api_key, "Anthropic")
+
+    // Build conversation messages for knowledge extraction
+    const conversationForExtraction = messages
+      .filter(
+        (m: any) =>
+          (m.role === "user" || m.role === "assistant") &&
+          typeof m.content === "string"
+      )
+      .map((m: any) => ({ role: m.role, content: m.content }))
+
+    const onStreamComplete = workspaceId
+      ? (assistantText: string) => {
+          const fullConversation = [
+            ...conversationForExtraction,
+            { role: "assistant", content: assistantText }
+          ]
+          triggerKnowledgeExtraction(
+            fullConversation,
+            profile.user_id,
+            workspaceId,
+            chatId,
+            profile.openai_api_key || undefined
+          )
+        }
+      : undefined
 
     let ANTHROPIC_FORMATTED_MESSAGES: any = messages.slice(1)
 
@@ -172,7 +204,10 @@ export async function POST(request: NextRequest) {
               stream: true
             })
 
-            const stream = anthropicStreamToReadableStream(finalResponse)
+            const stream = anthropicStreamToReadableStream(
+              finalResponse,
+              onStreamComplete
+            )
             return new Response(stream, {
               headers: { "Content-Type": "text/plain; charset=utf-8" }
             })
@@ -232,7 +267,10 @@ export async function POST(request: NextRequest) {
           stream: true
         })
 
-        const stream = anthropicStreamToReadableStream(finalResponse)
+        const stream = anthropicStreamToReadableStream(
+          finalResponse,
+          onStreamComplete
+        )
         return new Response(stream, {
           headers: { "Content-Type": "text/plain; charset=utf-8" }
         })
@@ -250,7 +288,10 @@ export async function POST(request: NextRequest) {
       })
 
       try {
-        const stream = anthropicStreamToReadableStream(response)
+        const stream = anthropicStreamToReadableStream(
+          response,
+          onStreamComplete
+        )
         return new Response(stream, {
           headers: { "Content-Type": "text/plain; charset=utf-8" }
         })

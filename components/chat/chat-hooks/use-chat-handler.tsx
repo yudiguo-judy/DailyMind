@@ -392,7 +392,8 @@ export const useChatHandler = () => {
             setFirstTokenReceived,
             setChatMessages,
             setToolInUse,
-            selectedWorkspace?.id
+            selectedWorkspace?.id,
+            selectedChat?.id
           )
         }
       }

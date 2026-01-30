@@ -11,9 +11,11 @@ import Anthropic from "@anthropic-ai/sdk"
  * Convert OpenAI streaming response to a ReadableStream
  */
 export function openAIStreamToReadableStream(
-  stream: Stream<ChatCompletionChunk>
+  stream: Stream<ChatCompletionChunk>,
+  onComplete?: (fullText: string) => void
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
+  let fullText = ""
 
   return new ReadableStream({
     async start(controller) {
@@ -21,10 +23,12 @@ export function openAIStreamToReadableStream(
         for await (const chunk of stream) {
           const content = chunk.choices[0]?.delta?.content
           if (content) {
+            fullText += content
             controller.enqueue(encoder.encode(content))
           }
         }
         controller.close()
+        onComplete?.(fullText)
       } catch (error) {
         controller.error(error)
       }

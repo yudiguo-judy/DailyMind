@@ -22,6 +22,7 @@ export const DailySummaryPanel: FC<DailySummaryPanelProps> = ({
   const [summaries, setSummaries] = useState<DailySummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [displayLimit, setDisplayLimit] = useState(limit)
 
   const loadSummaries = async () => {
     if (!profile || !selectedWorkspace) return
@@ -31,14 +32,55 @@ export const DailySummaryPanel: FC<DailySummaryPanelProps> = ({
       const data = await getDailySummariesByWorkspace(
         profile.user_id,
         selectedWorkspace.id,
-        { limit }
+        { limit: displayLimit }
       )
       setSummaries(data)
+
+      // Auto-generate yesterday's summary if it doesn't exist
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      const yesterdayStr = yesterday.toISOString().split("T")[0]
+      const hasYesterday = data.some((s: any) => s.date === yesterdayStr)
+
+      if (!hasYesterday) {
+        autoGenerateSummary(yesterdayStr)
+      }
     } catch (error: any) {
       console.error("Failed to load summaries:", error)
       toast.error("Failed to load summaries")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const autoGenerateSummary = async (date: string) => {
+    if (!profile || !selectedWorkspace) return
+
+    try {
+      const response = await fetch("/api/summary/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date,
+          workspace_id: selectedWorkspace.id,
+          force: false
+        })
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.summary) {
+        // Reload to show the new summary
+        const data = await getDailySummariesByWorkspace(
+          profile.user_id,
+          selectedWorkspace.id,
+          { limit }
+        )
+        setSummaries(data)
+      }
+    } catch (error) {
+      // Silently fail — auto-generation is best-effort
+      console.error("Auto-generate summary failed:", error)
     }
   }
 
@@ -77,7 +119,7 @@ export const DailySummaryPanel: FC<DailySummaryPanelProps> = ({
 
   useEffect(() => {
     loadSummaries()
-  }, [profile, selectedWorkspace])
+  }, [profile, selectedWorkspace, displayLimit])
 
   if (isLoading) {
     return (
@@ -144,15 +186,12 @@ export const DailySummaryPanel: FC<DailySummaryPanelProps> = ({
         </div>
       )}
 
-      {summaries.length > 0 && summaries.length >= limit && (
+      {summaries.length > 0 && summaries.length >= displayLimit && (
         <div className="text-center">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              // TODO: Implement load more or navigate to full summary page
-              toast.info("Load more feature coming soon!")
-            }}
+            onClick={() => setDisplayLimit(prev => prev + limit)}
           >
             Load More
           </Button>

@@ -3,24 +3,50 @@ import {
   openAIStreamToReadableStream,
   createStreamingResponse
 } from "@/lib/stream-utils"
+import { triggerKnowledgeExtraction } from "@/lib/trigger-knowledge-extraction"
 import { ChatSettings } from "@/types"
 import { ServerRuntime } from "next"
 import OpenAI from "openai"
 import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions.mjs"
 
-export const runtime: ServerRuntime = "edge"
-
 export async function POST(request: Request) {
   const json = await request.json()
-  const { chatSettings, messages } = json as {
+  const { chatSettings, messages, workspaceId, chatId } = json as {
     chatSettings: ChatSettings
     messages: any[]
+    workspaceId?: string
+    chatId?: string
   }
 
   try {
     const profile = await getServerProfile()
 
     checkApiKey(profile.openai_api_key, "OpenAI")
+
+    // Build conversation for extraction
+    const conversationForExtraction = messages
+      .filter(
+        (m: any) =>
+          (m.role === "user" || m.role === "assistant") &&
+          typeof m.content === "string"
+      )
+      .map((m: any) => ({ role: m.role, content: m.content }))
+
+    const onStreamComplete = workspaceId
+      ? (assistantText: string) => {
+          const fullConversation = [
+            ...conversationForExtraction,
+            { role: "assistant", content: assistantText }
+          ]
+          triggerKnowledgeExtraction(
+            fullConversation,
+            profile.user_id,
+            workspaceId,
+            chatId,
+            profile.openai_api_key || undefined
+          )
+        }
+      : undefined
 
     const openai = new OpenAI({
       apiKey: profile.openai_api_key || "",
@@ -39,7 +65,7 @@ export async function POST(request: Request) {
       stream: true
     })
 
-    const stream = openAIStreamToReadableStream(response)
+    const stream = openAIStreamToReadableStream(response, onStreamComplete)
 
     return createStreamingResponse(stream)
   } catch (error: any) {
